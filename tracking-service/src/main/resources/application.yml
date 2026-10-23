@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: tracking-service
+socket:
+  port: ${SOCKET_PORT:9092}

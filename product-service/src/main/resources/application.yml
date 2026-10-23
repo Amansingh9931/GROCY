@@ -1,0 +1,25 @@
+server:
+  port: 8002
+spring:
+  application:
+    name: product-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017}/grocecart_products
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
+      connect-timeout: 1s
+      timeout: 1s
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 60MB
+jwt:
+  secret: ${JWT_SECRET}
+  expires: ${JWT_EXPIRES:7d}
+internal:
+  key: ${INTERNAL_KEY:change-me-internal-key}
+cloudinary:
+  name: ${CLOUDINARY_NAME:}
+  api-key: ${CLOUDINARY_API_KEY:}
+  api-secret: ${CLOUDINARY_API_SECRET:}

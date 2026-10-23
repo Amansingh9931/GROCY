@@ -1,0 +1,99 @@
+# GroceCart - Spring Boot microservices.
+# Frontend is unchanged: its nginx proxies /api and /socket.io to "backend:8000", which is now the API gateway.
+
+x-service-env: &svc-env
+  MONGODB_URI: mongodb://mongodb:27017
+  JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+  JWT_EXPIRES: ${JWT_EXPIRES:-7d}
+  INTERNAL_KEY: ${INTERNAL_KEY:?set INTERNAL_KEY in .env}
+  USER_SERVICE_URL: http://user-service:8001
+  PRODUCT_SERVICE_URL: http://product-service:8002
+  CART_SERVICE_URL: http://cart-service:8003
+  ADDRESS_SERVICE_URL: http://address-service:8004
+  ORDER_SERVICE_URL: http://order-service:8005
+  DELIVERY_SERVICE_URL: http://delivery-service:8006
+  JAVA_TOOL_OPTIONS: -Xmx256m
+
+x-java-build: &java-build
+  context: .
+
+services:
+  mongodb:
+    image: mongo:8
+    volumes: [ "mongo-data:/data/db" ]
+    healthcheck:
+      test: [ "CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    volumes: [ "redis-data:/data" ]
+
+  user-service:
+    build: { <<: *java-build, args: { MODULE: user-service } }
+    environment:
+      <<: *svc-env
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    depends_on: { mongodb: { condition: service_healthy } }
+
+  product-service:
+    build: { <<: *java-build, args: { MODULE: product-service } }
+    environment:
+      <<: *svc-env
+      REDIS_URL: redis://redis:6379
+      CLOUDINARY_NAME: ${CLOUDINARY_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+    depends_on: { mongodb: { condition: service_healthy }, redis: { condition: service_started } }
+
+  cart-service:
+    build: { <<: *java-build, args: { MODULE: cart-service } }
+    environment: *svc-env
+    depends_on: { mongodb: { condition: service_healthy } }
+
+  address-service:
+    build: { <<: *java-build, args: { MODULE: address-service } }
+    environment: *svc-env
+    depends_on: { mongodb: { condition: service_healthy } }
+
+  order-service:
+    build: { <<: *java-build, args: { MODULE: order-service } }
+    environment: *svc-env
+    depends_on: { mongodb: { condition: service_healthy } }
+
+  delivery-service:
+    build: { <<: *java-build, args: { MODULE: delivery-service } }
+    environment: *svc-env
+
+  tracking-service:
+    build: { <<: *java-build, args: { MODULE: tracking-service } }
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx128m
+
+  api-gateway:
+    build: { <<: *java-build, args: { MODULE: api-gateway } }
+    environment:
+      <<: *svc-env
+      TRACKING_WS_URL: ws://tracking-service:9092
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+    networks:
+      default:
+        aliases: [ backend ]   # keeps Frontend/nginx.conf working unchanged
+    ports: [ "8000:8000" ]
+    depends_on: [ user-service, product-service, cart-service, address-service, order-service, delivery-service, tracking-service ]
+
+  frontend:
+    build:
+      context: ./Frontend
+      args:
+        VITE_BACKEND_URL: ""
+    ports: [ "80:80" ]
+    depends_on: [ api-gateway ]
+
+volumes:
+  mongo-data:
+  redis-data:

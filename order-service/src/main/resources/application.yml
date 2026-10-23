@@ -1,0 +1,22 @@
+server:
+  port: 8005
+spring:
+  application:
+    name: order-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017}/grocecart_orders
+jwt:
+  secret: ${JWT_SECRET}
+  expires: ${JWT_EXPIRES:7d}
+internal:
+  key: ${INTERNAL_KEY:change-me-internal-key}
+services:
+  user:
+    url: ${USER_SERVICE_URL:http://localhost:8001}
+  product:
+    url: ${PRODUCT_SERVICE_URL:http://localhost:8002}
+  cart:
+    url: ${CART_SERVICE_URL:http://localhost:8003}
+  address:
+    url: ${ADDRESS_SERVICE_URL:http://localhost:8004}

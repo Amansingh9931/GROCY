@@ -1,0 +1,19 @@
+server:
+  port: 8006
+spring:
+  application:
+    name: delivery-service
+jwt:
+  secret: ${JWT_SECRET}
+  expires: ${JWT_EXPIRES:7d}
+internal:
+  key: ${INTERNAL_KEY:change-me-internal-key}
+services:
+  user:
+    url: ${USER_SERVICE_URL:http://localhost:8001}
+  product:
+    url: ${PRODUCT_SERVICE_URL:http://localhost:8002}
+  address:
+    url: ${ADDRESS_SERVICE_URL:http://localhost:8004}
+  order:
+    url: ${ORDER_SERVICE_URL:http://localhost:8005}

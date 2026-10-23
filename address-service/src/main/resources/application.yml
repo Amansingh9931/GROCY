@@ -1,0 +1,14 @@
+server:
+  port: 8004
+spring:
+  application:
+    name: address-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017}/grocecart_addresses
+      auto-index-creation: true
+jwt:
+  secret: ${JWT_SECRET}
+  expires: ${JWT_EXPIRES:7d}
+internal:
+  key: ${INTERNAL_KEY:change-me-internal-key}
